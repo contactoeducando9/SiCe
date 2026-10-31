@@ -1,0 +1,492 @@
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\MainWindowGUI.java ==========
+
+package SiCe.GUI;
+import javax.swing.*;
+
+import SiCe.GUI.authentication.LoginGUI;
+import SiCe.GUI.mainPanel.MainPanelGUI;
+import SiCe.GUI.authentication.AccountGUI;
+
+import java.awt.*;
+
+
+public class MainWindowGUI extends JFrame {
+
+    AccountGUI okey =new AccountGUI(this);
+
+    private JPanel contenedor;
+    private CardLayout layout;
+
+    //Constructor de la ventana principal
+    public MainWindowGUI () {
+        setSize(800,600);
+        setMinimumSize(new Dimension(800,600));
+        setTitle("SiCe");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        layout = new CardLayout();
+        contenedor = new JPanel(layout);
+
+        //se crean los JPanel correspondientes "llamando" (new) a un constructor (el √∫nico) que tiene de param√©tro un objeto de la clase que 
+        //que construye, y requiere ingresar esta misma instancia (this), para que muestra estos mismos paneles agregados 
+        //a este objeto (ventana principal).
+        contenedor.add(new LoginGUI(this), "LOGIN");
+        contenedor.add(new MainPanelGUI(this), "PANEL");
+        contenedor.add(new AccountGUI(this),"ACCOUNT");
+        
+        add(contenedor);
+
+        layout.show(contenedor, "LOGIN");
+    }
+
+    //es el m√©todo que se utiliza en los ActionListener de los botones para mostrar el respectivo JPanel.
+    public void changePanel (String n){
+        layout.show(contenedor, n);
+    }
+
+        //El m√©todo main que inicia el programa creando un objeto de la clase de MainWindowGUI, sigo sin entender el 
+        //SwingUtilities.invokeLater
+        public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainWindowGUI ventana = new MainWindowGUI();
+            ventana.setVisible(true);
+        });
+    }
+}
+
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\authentication\AccountGUI.java ==========
+
+package SiCe.GUI.authentication;
+
+import javax.swing.*;
+import java.awt.*;
+
+import SiCe.GUI.MainWindowGUI;
+
+public class AccountGUI extends JPanel {
+
+    public AccountGUI (MainWindowGUI n) {
+        JButton logout = new JButton("Log out");
+        logout.setMaximumSize(new Dimension (100,40));
+
+        logout.addActionListener(e -> {
+          n.changePanel("LOGIN");
+        });
+        add(logout);
+    }
+    
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\authentication\LoginGUI.java ==========
+
+package SiCe.GUI.authentication;
+import javax.swing.*;
+
+import SiCe.GUI.MainWindowGUI;
+
+
+
+public class LoginGUI extends JPanel {
+
+    public LoginGUI (MainWindowGUI n) {
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+        JLabel log = new JLabel("Login");
+        JButton main = new JButton("ingresar");
+
+        log
+        .setAlignmentX(CENTER_ALIGNMENT);
+        main
+        .setAlignmentX(CENTER_ALIGNMENT);
+
+        add(Box.createVerticalGlue());
+        add(log);
+        add(Box.createVerticalStrut(10));
+        add(main);
+        add(Box.createVerticalGlue());
+        
+        main.addActionListener(e -> {
+          n.changePanel("PANEL");
+        });
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\dietScanner\DietScannerGUI.java ==========
+
+package SiCe.GUI.dietScanner;
+import javax.swing.*;
+import java.awt.*;
+
+
+
+public class DietScannerGUI extends JPanel {
+
+    public DietScannerGUI() {
+       setLayout(new BorderLayout());
+
+        add(new ManuallyGUI(), BorderLayout.CENTER);
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\dietScanner\ManuallyGUI.java ==========
+
+package SiCe.GUI.dietScanner;
+
+import java.awt.*;
+import javax.swing.*;
+
+public class ManuallyGUI extends JPanel{
+
+//-----------Crear la mayor√≠a de objetos que ocuparemos en todo el panel------------------------------------
+
+    JPanel scanner; JPanel combos; JPanel dishPanel; JPanel dishButton;
+    JPanel displayDiet;
+
+    JComboBox<String> dy; String[] Dias = {"Lunes", "Martes", "Mi√©rcoles", "Jueves", "Viernes", "S√°bado", "Domingo"};
+    JComboBox<String> mealtime; String[] Comida = {"Desayuno", "1er colaci√≥n", "Comida", "2da colaci√≥n", "Cena"};
+
+    JLabel dish; JTextField disntxt;
+    JLabel ingrN; JTextField ingrNtxt; 
+    JLabel amount; JTextField amounttxt;
+    JComboBox<String> unit; String[] units = {"kg","gr", "ltrs", "ml","pz"};
+    JButton ingr;
+
+    JButton dishB;
+
+//----------Constructor que llamaremos para dise√±ar el lector Manual---------------------------------------------------------------
+    public ManuallyGUI () {
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        displayDiet = new JPanel();
+        displayDiet.setBackground(Color.BLUE);
+        displayDiet.setBorder(
+           BorderFactory.createCompoundBorder(
+         BorderFactory.createMatteBorder(10, 10, 10, 10, Color.BLACK),
+        BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        displayDiet.setVisible(true);
+
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+
+        gbc.gridy = 0;
+        gbc.weighty = 0;
+        add(scannerCreator(), gbc);
+
+        gbc.gridy = 1;
+        gbc.weighty = 1;
+        add(displayDiet, gbc);
+
+        setVisible(true);
+        
+    }
+
+    public JPanel scannerCreator () {
+        scanner = new JPanel(new GridBagLayout());
+        GridBagConstraints sgbc = new GridBagConstraints();
+
+    //---Definiendo los paneles que iran dentro de scanner--------------------------------------------------------
+
+        combos = new JPanel();
+        combos.setLayout(new GridBagLayout());
+        GridBagConstraints pgbc = new GridBagConstraints();
+        dy = new JComboBox<String>(Dias); 
+        mealtime = new JComboBox<String>(Comida); 
+
+        pgbc.fill = GridBagConstraints. HORIZONTAL;
+        pgbc.weightx = 1.0;
+        pgbc.insets = new Insets(4, 5, 4, 5);
+
+        pgbc.gridx = 0;
+        pgbc.gridy = 0;
+        pgbc.weighty = 0;
+        pgbc.gridwidth = 1;
+        pgbc.gridheight = 1;
+        combos.add(dy, pgbc);
+
+        pgbc.gridx = 1;
+        pgbc.gridy = 0;
+        pgbc.weighty = 1.0;
+        pgbc.gridwidth = 1;
+        pgbc.gridheight = 1;
+        combos.add(mealtime, pgbc);
+        
+
+
+
+
+        dishPanel = new JPanel();
+        dishPanel.setLayout(new GridBagLayout());
+
+        dish = new JLabel("Nombre del platillo: "); disntxt = new JTextField(15);
+        ingrN = new JLabel("Ingrediente: "); ingrNtxt = new JTextField(15);
+        amount = new JLabel("Cantidad: "); amounttxt = new JTextField(15);
+        unit = new JComboBox<String>(units); ingr = new JButton("Agregar");
+
+        pgbc.gridx = 0;
+        pgbc.gridy = 0;
+        pgbc.weightx = 0;
+        pgbc.weighty = 0;
+        pgbc.gridwidth = 1;
+        pgbc.gridheight = 1;
+        dishPanel.add(dish, pgbc);
+
+        pgbc.gridx = 1;
+        pgbc.weightx = 1;
+        dishPanel.add(disntxt, pgbc);
+
+        pgbc.gridx = 0;
+        pgbc.gridy = 1;
+        pgbc.weightx = 0;
+        dishPanel.add(ingrN, pgbc);
+
+        pgbc.gridx = 1;
+        pgbc.weightx = 1;
+        dishPanel.add(ingrNtxt, pgbc);
+
+        pgbc.gridx = 2;
+        pgbc.weightx = 0;
+        dishPanel.add(amount, pgbc);
+
+        pgbc.gridx = 3;
+        pgbc.weightx = 1;
+        dishPanel.add(amounttxt, pgbc);
+        
+        pgbc.gridx = 4;
+        pgbc.weightx = 0;
+        dishPanel.add(unit, pgbc);
+
+        pgbc.gridx = 5;
+        pgbc.gridy = 2;
+        pgbc.gridwidth=GridBagConstraints.REMAINDER;
+        pgbc.anchor = GridBagConstraints.EAST;
+        pgbc.fill = GridBagConstraints.NONE;
+        dishPanel.add(ingr, pgbc);
+
+
+
+
+
+
+
+        dishButton = new JPanel();
+        dishButton.setLayout(new BorderLayout());
+        dishB = new JButton("Agregar platillo");
+        dishButton.add(dishB, BorderLayout.EAST);
+        dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
+            
+
+        combos.setBackground(Color.GREEN);
+        dishPanel.setBackground(Color.GRAY);
+        dishButton.setBackground(Color.YELLOW);
+
+    //----Acomodando la distribuci√≥n de los paneles para agregarlos a Scanner-----------------------------
+        sgbc.gridx = 0;
+        sgbc.fill = GridBagConstraints.BOTH;
+        sgbc.weightx = 1.0;
+        sgbc.gridwidth = 1;
+        sgbc.gridheight = 1;
+
+        sgbc.gridy = 0;
+        sgbc.weighty = 0;
+        scanner.add(combos, sgbc);
+
+        sgbc.gridy = 1;
+        sgbc.weighty = 2.0;
+        scanner.add(dishPanel, sgbc);
+
+        sgbc.gridy = 2;
+        sgbc.weighty = 0;
+        scanner.add(dishButton, sgbc);
+        scanner.setVisible(true);
+        return scanner;
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\mainPanel\HomeGUI.java ==========
+
+package SiCe.GUI.mainPanel;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+
+
+public class HomeGUI extends JPanel {
+
+    public HomeGUI() {
+        JLabel amount = new JLabel("Home");
+    
+        add(amount); 
+    
+    }
+
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\GUI\mainPanel\MainPanelGUI.java ==========
+
+package SiCe.GUI.mainPanel;
+
+import javax.swing.*;
+import java.awt.*;
+
+import SiCe.GUI.MainWindowGUI;
+import SiCe.GUI.dietScanner.DietScannerGUI;
+import SiCe.GUI.authentication.AccountGUI;
+
+public class MainPanelGUI extends JPanel {
+
+    private final JPanel sidebar;
+    private final JPanel contentPanel;
+    private final CardLayout cardLayout;
+    JPanel topBar;
+
+
+    public MainPanelGUI(MainWindowGUI n){
+        setLayout(new BorderLayout());
+        
+        topBar = createTopBar();
+        sidebar = createSidebar();
+
+        cardLayout = new CardLayout();
+        contentPanel = new JPanel(cardLayout);
+
+        contentPanel.add(new HomeGUI(), "HOME");
+        contentPanel.add(new DietScannerGUI(), "SCANNER");
+        contentPanel.add(new AccountGUI(n), "ACCOUNT");
+
+        JPanel mainArea = new JPanel(new BorderLayout());
+        mainArea.add(sidebar, BorderLayout.WEST);
+        mainArea.add(contentPanel, BorderLayout.CENTER);
+
+        add(topBar, BorderLayout.NORTH);
+        add(mainArea, BorderLayout.CENTER);
+    }
+
+    //M√©todos auxiliares para darle el cuerpo al constructor del MainPanelGUI
+
+    public JPanel createSidebar(){ 
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        panel.setBackground(new Color(200, 235, 235));
+        panel.setPreferredSize(new Dimension(190, 0));
+        panel.setBorder(
+           BorderFactory.createCompoundBorder(
+         BorderFactory.createMatteBorder(0, 0, 0, 2, Color.GRAY),
+        BorderFactory.createEmptyBorder(10, 8, 10, 8)
+        ));
+
+        JButton homeButton = new JButton("Inicio");
+        JButton dietButton = new JButton("Lector de dieta");
+        JButton account = new JButton("Perfil");
+
+        // Mantener los botones alineados y al ancho del men√∫
+        homeButton.setAlignmentX(LEFT_ALIGNMENT);
+        dietButton.setAlignmentX(LEFT_ALIGNMENT);
+        account.setAlignmentX(LEFT_ALIGNMENT);
+
+        homeButton.setMaximumSize(
+            new Dimension(Integer.MAX_VALUE, 40)
+        );
+        dietButton.setMaximumSize(
+            new Dimension(Integer.MAX_VALUE, 40)
+        );
+        account.setMaximumSize(
+            new Dimension(Integer.MAX_VALUE, 40)
+        );
+
+        homeButton.addActionListener(e ->
+            cardLayout.show(contentPanel, "HOME")
+        );
+
+        dietButton.addActionListener(e ->
+            cardLayout.show(contentPanel, "SCANNER")
+        );
+        account.addActionListener(e ->
+            cardLayout.show(contentPanel, "ACCOUNT")
+        );
+
+        panel.add(homeButton);
+        panel.add(Box.createVerticalStrut(8));
+        panel.add(dietButton);
+        panel.add(Box.createVerticalGlue());
+        panel.add(account);
+
+        return panel;
+    }
+
+    public JPanel createTopBar () {
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton menuButton = new JButton("‚ò∞");
+        JLabel title = new JLabel("SiCe");
+
+        menuButton.addActionListener(e -> {
+            sidebar.setVisible(!sidebar.isVisible());
+
+            revalidate();
+            repaint();
+        });
+
+        topBar.add(menuButton);
+        topBar.add(title);
+
+        return topBar;
+    }
+
+}
+
+    
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\DietDay.java ==========
+
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\Dish.java ==========
+
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\Ingredient.java ==========
+
+package SiCe.Model;
+
+public class Ingredient {
+    String name;
+    double amount;
+    String unit;
+
+    public Ingredient () {
+    }
+
+    public Ingredient (String n, double a, String u) {
+        this.name = n;
+        this.amount = a;
+        this.unit = u;
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\WeeklyDiet.java ==========
+
+package SiCe.Model;
+
+public class WeeklyDiet {
+    
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Services\DietScanner.java ==========
+
