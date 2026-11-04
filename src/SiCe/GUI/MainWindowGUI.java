@@ -3,14 +3,13 @@ import javax.swing.*;
 
 import SiCe.GUI.authentication.LoginGUI;
 import SiCe.GUI.mainPanel.MainPanelGUI;
-import SiCe.GUI.authentication.AccountGUI;
 
 import java.awt.*;
 
-
 public class MainWindowGUI extends JFrame {
 
-    AccountGUI okey =new AccountGUI(this);
+    MainPanelGUI mainPanelGUI = new MainPanelGUI(this);
+    LoginGUI loginGUI = new LoginGUI(this);
 
     private JPanel contenedor;
     private CardLayout layout;
@@ -26,12 +25,8 @@ public class MainWindowGUI extends JFrame {
         layout = new CardLayout();
         contenedor = new JPanel(layout);
 
-        //se crean los JPanel correspondientes "llamando" (new) a un constructor (el único) que tiene de paramétro un objeto de la clase que 
-        //que construye, y requiere ingresar esta misma instancia (this), para que muestra estos mismos paneles agregados 
-        //a este objeto (ventana principal).
-        contenedor.add(new LoginGUI(this), "LOGIN");
-        contenedor.add(new MainPanelGUI(this), "PANEL");
-        contenedor.add(new AccountGUI(this),"ACCOUNT");
+        contenedor.add(loginGUI, "LOGIN");
+        contenedor.add(mainPanelGUI, "PANEL");
         
         add(contenedor);
 

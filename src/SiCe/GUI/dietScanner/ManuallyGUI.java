@@ -3,21 +3,32 @@ package SiCe.GUI.dietScanner;
 import java.awt.*;
 import javax.swing.*;
 
+import SiCe.Services.*;
+
 public class ManuallyGUI extends JPanel{
 
 //-----------Crear la mayoría de objetos que ocuparemos en todo el panel------------------------------------
 
+    DietScannerActions actions = new DietScannerActions();    
+
     JPanel scanner; JPanel combos; JPanel dishPanel; JPanel dishButton;
     JPanel displayDiet;
 
-    JComboBox<String> dy; String[] Dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
-    JComboBox<String> mealtime; String[] Comida = {"Desayuno", "1er colación", "Comida", "2da colación", "Cena"};
+    String[] Dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    public JComboBox<String> dy = new JComboBox<String>(Dias);
+    String[] Comida = {"Desayuno", "1er colación", "Comida", "2da colación", "Cena"};
+    public JComboBox<String> mealtime = new JComboBox<String>(Comida);
 
-    JLabel dish; JTextField disntxt;
-    JLabel ingrN; JTextField ingrNtxt; 
-    JLabel amount; JTextField amounttxt;
-    JComboBox<String> unit; String[] units = {"kg","gr", "ltrs", "ml","pz"};
-    JButton ingr;
+    JLabel dish;
+    public DefaultComboBoxModel<String> platillos = new DefaultComboBoxModel<>();
+    public JComboBox<String> comboPlatillos = new JComboBox<String>(platillos);
+    JButton agregarPlatillo = new JButton("Nuevo"); 
+    JLabel ingrN; public JTextField ingrNtxt = new JTextField(15); 
+    JLabel amount; public JTextField amounttxt = new JTextField(15);
+    String[] units = {"kg","gr", "ltrs", "ml","pz"};
+    public JComboBox<String> unit = new JComboBox<String>(units);
+    
+    JButton ingr = new JButton("Agregar");
 
     JButton dishB;
 
@@ -88,15 +99,18 @@ public class ManuallyGUI extends JPanel{
         dishPanel = new JPanel();
         dishPanel.setLayout(new GridBagLayout());
 
-        dish = new JLabel("Nombre del platillo: "); disntxt = new JTextField(15);
-        ingrN = new JLabel("Ingrediente: "); ingrNtxt = new JTextField(15);
-        amount = new JLabel("Cantidad: "); amounttxt = new JTextField(15);
-        unit = new JComboBox<String>(units); ingr = new JButton("Agregar");
+        dish = new JLabel("Nombre del platillo: ");
+        ingrN = new JLabel("Ingrediente: "); 
+        amount = new JLabel("Cantidad: "); 
 
         ingr.addActionListener(e -> {
-          //¿aquí debo de poner el enlace al mecanismo para que de alguna manera los datos puestos en nombre de platillo
-          //ingrediente y cantidad (y demas secciones) se guarder en un objeto dish?  ¿como lo hago, es correcto el enfoque?
+          actions.agregarIngrediente(this);
         });
+
+        agregarPlatillo.addActionListener(e -> {
+            platillos.addElement(comboPlatillos.getSelectedItem().toString());
+        });
+
         pgbc.gridx = 0;
         pgbc.gridy = 0;
         pgbc.weightx = 0;
@@ -105,9 +119,14 @@ public class ManuallyGUI extends JPanel{
         pgbc.gridheight = 1;
         dishPanel.add(dish, pgbc);
 
+        comboPlatillos.setEditable(true);
         pgbc.gridx = 1;
         pgbc.weightx = 1;
-        dishPanel.add(disntxt, pgbc);
+        dishPanel.add(comboPlatillos, pgbc);
+
+        pgbc.gridx = 2;
+        pgbc.weightx = 0;
+        dishPanel.add(agregarPlatillo, pgbc);
 
         pgbc.gridx = 0;
         pgbc.gridy = 1;
@@ -148,8 +167,7 @@ public class ManuallyGUI extends JPanel{
         dishB = new JButton("Agregar platillo");
 
         dishB.addActionListener(e -> {
-          //¿aquí debo de poner el enlace al mecanismo para que al ingresar agregar platillo se aguerde todo el platillo,
-          //en el dia y tiempo de comida selecciónado? ¿como lo hago, es correcto el enfoque?
+          actions.agregarPlatillo(this);
         });
         dishButton.add(dishB, BorderLayout.EAST);
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));

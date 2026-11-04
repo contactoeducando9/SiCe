@@ -4,19 +4,24 @@ import javax.swing.*;
 import java.awt.*;
 
 import SiCe.GUI.MainWindowGUI;
-import SiCe.GUI.dietScanner.DietScannerGUI;
 import SiCe.GUI.authentication.AccountGUI;
+import SiCe.GUI.dietScanner.DietScannerGUI;
 
 public class MainPanelGUI extends JPanel {
+
+    HomeGUI homeGUI = new HomeGUI();
+    DietScannerGUI dietScannerGUI = new DietScannerGUI();
 
     private final JPanel sidebar;
     private final JPanel contentPanel;
     private final CardLayout cardLayout;
-    JPanel topBar;
+    private final JPanel topBar;
 
 
     public MainPanelGUI(MainWindowGUI n){
         setLayout(new BorderLayout());
+
+        AccountGUI accountGUI = new AccountGUI(n);
         
         topBar = createTopBar();
         sidebar = createSidebar();
@@ -24,9 +29,9 @@ public class MainPanelGUI extends JPanel {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        contentPanel.add(new HomeGUI(), "HOME");
-        contentPanel.add(new DietScannerGUI(), "SCANNER");
-        contentPanel.add(new AccountGUI(n), "ACCOUNT");
+        contentPanel.add(homeGUI, "HOME");
+        contentPanel.add(dietScannerGUI, "SCANNER");
+        contentPanel.add(accountGUI, "ACCOUNT");
 
         JPanel mainArea = new JPanel(new BorderLayout());
         mainArea.add(sidebar, BorderLayout.WEST);

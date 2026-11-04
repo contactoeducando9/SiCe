@@ -7,14 +7,13 @@ import javax.swing.*;
 
 import SiCe.GUI.authentication.LoginGUI;
 import SiCe.GUI.mainPanel.MainPanelGUI;
-import SiCe.GUI.authentication.AccountGUI;
 
 import java.awt.*;
 
-
 public class MainWindowGUI extends JFrame {
 
-    AccountGUI okey =new AccountGUI(this);
+    MainPanelGUI mainPanelGUI = new MainPanelGUI(this);
+    LoginGUI loginGUI = new LoginGUI(this);
 
     private JPanel contenedor;
     private CardLayout layout;
@@ -30,12 +29,8 @@ public class MainWindowGUI extends JFrame {
         layout = new CardLayout();
         contenedor = new JPanel(layout);
 
-        //se crean los JPanel correspondientes "llamando" (new) a un constructor (el único) que tiene de paramétro un objeto de la clase que 
-        //que construye, y requiere ingresar esta misma instancia (this), para que muestra estos mismos paneles agregados 
-        //a este objeto (ventana principal).
-        contenedor.add(new LoginGUI(this), "LOGIN");
-        contenedor.add(new MainPanelGUI(this), "PANEL");
-        contenedor.add(new AccountGUI(this),"ACCOUNT");
+        contenedor.add(loginGUI, "LOGIN");
+        contenedor.add(mainPanelGUI, "PANEL");
         
         add(contenedor);
 
@@ -143,21 +138,32 @@ package SiCe.GUI.dietScanner;
 import java.awt.*;
 import javax.swing.*;
 
+import SiCe.Services.*;
+
 public class ManuallyGUI extends JPanel{
 
 //-----------Crear la mayoría de objetos que ocuparemos en todo el panel------------------------------------
 
+    DietScannerActions actions = new DietScannerActions();    
+
     JPanel scanner; JPanel combos; JPanel dishPanel; JPanel dishButton;
     JPanel displayDiet;
 
-    JComboBox<String> dy; String[] Dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
-    JComboBox<String> mealtime; String[] Comida = {"Desayuno", "1er colación", "Comida", "2da colación", "Cena"};
+    String[] Dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    public JComboBox<String> dy = new JComboBox<String>(Dias);
+    String[] Comida = {"Desayuno", "1er colación", "Comida", "2da colación", "Cena"};
+    public JComboBox<String> mealtime = new JComboBox<String>(Comida);
 
-    JLabel dish; JTextField disntxt;
-    JLabel ingrN; JTextField ingrNtxt; 
-    JLabel amount; JTextField amounttxt;
-    JComboBox<String> unit; String[] units = {"kg","gr", "ltrs", "ml","pz"};
-    JButton ingr;
+    JLabel dish;
+    public DefaultComboBoxModel<String> platillos = new DefaultComboBoxModel<>();
+    public JComboBox<String> comboPlatillos = new JComboBox<String>(platillos);
+    JButton agregarPlatillo = new JButton("Nuevo"); 
+    JLabel ingrN; public JTextField ingrNtxt = new JTextField(15); 
+    JLabel amount; public JTextField amounttxt = new JTextField(15);
+    String[] units = {"kg","gr", "ltrs", "ml","pz"};
+    public JComboBox<String> unit = new JComboBox<String>(units);
+    
+    JButton ingr = new JButton("Agregar");
 
     JButton dishB;
 
@@ -228,10 +234,17 @@ public class ManuallyGUI extends JPanel{
         dishPanel = new JPanel();
         dishPanel.setLayout(new GridBagLayout());
 
-        dish = new JLabel("Nombre del platillo: "); disntxt = new JTextField(15);
-        ingrN = new JLabel("Ingrediente: "); ingrNtxt = new JTextField(15);
-        amount = new JLabel("Cantidad: "); amounttxt = new JTextField(15);
-        unit = new JComboBox<String>(units); ingr = new JButton("Agregar");
+        dish = new JLabel("Nombre del platillo: ");
+        ingrN = new JLabel("Ingrediente: "); 
+        amount = new JLabel("Cantidad: "); 
+
+        ingr.addActionListener(e -> {
+          actions.agregarIngrediente(this);
+        });
+
+        agregarPlatillo.addActionListener(e -> {
+            platillos.addElement(comboPlatillos.getSelectedItem().toString());
+        });
 
         pgbc.gridx = 0;
         pgbc.gridy = 0;
@@ -241,9 +254,14 @@ public class ManuallyGUI extends JPanel{
         pgbc.gridheight = 1;
         dishPanel.add(dish, pgbc);
 
+        comboPlatillos.setEditable(true);
         pgbc.gridx = 1;
         pgbc.weightx = 1;
-        dishPanel.add(disntxt, pgbc);
+        dishPanel.add(comboPlatillos, pgbc);
+
+        pgbc.gridx = 2;
+        pgbc.weightx = 0;
+        dishPanel.add(agregarPlatillo, pgbc);
 
         pgbc.gridx = 0;
         pgbc.gridy = 1;
@@ -282,6 +300,10 @@ public class ManuallyGUI extends JPanel{
         dishButton = new JPanel();
         dishButton.setLayout(new BorderLayout());
         dishB = new JButton("Agregar platillo");
+
+        dishB.addActionListener(e -> {
+          actions.agregarPlatillo(this);
+        });
         dishButton.add(dishB, BorderLayout.EAST);
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
             
@@ -343,19 +365,24 @@ import javax.swing.*;
 import java.awt.*;
 
 import SiCe.GUI.MainWindowGUI;
-import SiCe.GUI.dietScanner.DietScannerGUI;
 import SiCe.GUI.authentication.AccountGUI;
+import SiCe.GUI.dietScanner.DietScannerGUI;
 
 public class MainPanelGUI extends JPanel {
+
+    HomeGUI homeGUI = new HomeGUI();
+    DietScannerGUI dietScannerGUI = new DietScannerGUI();
 
     private final JPanel sidebar;
     private final JPanel contentPanel;
     private final CardLayout cardLayout;
-    JPanel topBar;
+    private final JPanel topBar;
 
 
     public MainPanelGUI(MainWindowGUI n){
         setLayout(new BorderLayout());
+
+        AccountGUI accountGUI = new AccountGUI(n);
         
         topBar = createTopBar();
         sidebar = createSidebar();
@@ -363,9 +390,9 @@ public class MainPanelGUI extends JPanel {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        contentPanel.add(new HomeGUI(), "HOME");
-        contentPanel.add(new DietScannerGUI(), "SCANNER");
-        contentPanel.add(new AccountGUI(n), "ACCOUNT");
+        contentPanel.add(homeGUI, "HOME");
+        contentPanel.add(dietScannerGUI, "SCANNER");
+        contentPanel.add(accountGUI, "ACCOUNT");
 
         JPanel mainArea = new JPanel(new BorderLayout());
         mainArea.add(sidebar, BorderLayout.WEST);
@@ -453,10 +480,51 @@ public class MainPanelGUI extends JPanel {
 
 ========== C:\Users\W10\OneDrive\Documentos\V�ctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\DietDay.java ==========
 
+package SiCe.Model;
+
+import java.util.ArrayList;
+
+public class DietDay {
+    ArrayList<Dish> comidasDelDia = new ArrayList<Dish>();
+    String diaDeLaSemana;
+
+    public DietDay (String n) {
+        this.diaDeLaSemana = n;
+    }
+
+    public void addDish (Dish n) {
+        this.comidasDelDia.add(n);
+    }
+}
 
 
 ========== C:\Users\W10\OneDrive\Documentos\V�ctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\Dish.java ==========
 
+package SiCe.Model;
+
+import java.util.ArrayList;
+
+public class Dish {
+    ArrayList<Ingredient> ingrs = new ArrayList<Ingredient>();
+    public String nombreDelPlatillo;
+    public String tiempoDeComida;
+
+    public Dish () {
+    }
+
+    public Dish (String m, String n) {
+        this.nombreDelPlatillo = m;
+        this.tiempoDeComida = n;
+    }
+
+    public void dishIngrAdder (Ingredient n) {
+        this.ingrs.add(n);
+    }
+
+    public void dishReload () {
+        this.ingrs.clear();
+    }
+}
 
 
 ========== C:\Users\W10\OneDrive\Documentos\V�ctor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\Ingredient.java ==========
@@ -483,10 +551,71 @@ public class Ingredient {
 
 package SiCe.Model;
 
+import java.util.ArrayList;
+
 public class WeeklyDiet {
+    ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
+    String serial;
+
+    public void dietDayAdder (DietDay n) {
+        diasDeLaSemana.add(n);        
+    }
     
 }
 
 
-========== C:\Users\W10\OneDrive\Documentos\V�ctor\Proyectos\VisualStudio\SiCe\src\SiCe\Services\DietScanner.java ==========
+========== C:\Users\W10\OneDrive\Documentos\V�ctor\Proyectos\VisualStudio\SiCe\src\SiCe\Services\DietScannerActions.java ==========
+
+package SiCe.Services;
+
+import SiCe.Model.*;
+import SiCe.GUI.dietScanner.*;
+
+import java.util.ArrayList;
+
+
+public class DietScannerActions {
+
+    public ArrayList<WeeklyDiet> dietas = new ArrayList<WeeklyDiet>();
+    public ArrayList<DietDay> baseDays = new ArrayList<DietDay>();
+    public ArrayList<Dish> base = new ArrayList<Dish>(); 
+
+    public void agregarIngrediente (ManuallyGUI n) {
+        
+        if (base.size() == 0) {
+            Dish platilloNuevo = new Dish(n.comboPlatillos.getSelectedItem().toString(), n.dy.getSelectedItem().toString());
+            platilloNuevo.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
+            base.add(platilloNuevo);  
+            n.ingrNtxt.setText(""); n.amounttxt.setText("");
+        } else {
+            for (Dish a : base) {
+                if (a.nombreDelPlatillo.equals(n.comboPlatillos.getSelectedItem().toString())) {
+                    a.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
+                } else {
+                    Dish platilloNuevo = new Dish(n.comboPlatillos.getSelectedItem().toString(), n.dy.getSelectedItem().toString() );
+                    platilloNuevo.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
+                    base.add(platilloNuevo);  
+                    n.ingrNtxt.setText(""); n.amounttxt.setText("");
+                }
+            }
+        }
+    }
+
+    public void agregarPlatillo (ManuallyGUI n) {
+        DietDay nuevoDia;
+        WeeklyDiet nuevaDieta;
+
+        for (Dish a : base) {
+            if (a.nombreDelPlatillo.equals(n.comboPlatillos.getSelectedItem().toString())){
+                nuevoDia = new DietDay(n.dy.getSelectedItem().toString());
+                nuevaDieta = new WeeklyDiet();
+                nuevoDia.addDish(a);
+                baseDays.add(nuevoDia);
+                nuevaDieta.dietDayAdder(nuevoDia);
+                a.dishReload();
+                break;
+            }
+        }
+    }
+}
 
