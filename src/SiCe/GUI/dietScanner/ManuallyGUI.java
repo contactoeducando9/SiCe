@@ -2,6 +2,9 @@ package SiCe.GUI.dietScanner;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import SiCe.Services.*;
 
@@ -12,11 +15,21 @@ public class ManuallyGUI extends JPanel{
     DietScannerActions actions = new DietScannerActions();    
 
     JPanel scanner; JPanel combos; JPanel dishPanel; JPanel dishButton;
+
+    String [] columnas = {"","Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    String[][] datos = {
+            {"Desayuno", "", "", "", "", "", "", ""},
+            {"Colación", "", "", "", "", "", "", ""},
+            {"Comida", "", "", "", "", "", "", ""},
+            {"Colación", "", "", "", "", "", "", ""},
+            {"Cena", "", "", "", "", "", "", ""}
+        };
+    public DefaultTableModel modelo = new DefaultTableModel(datos, columnas);
     JPanel displayDiet;
 
     String[] Dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
     public JComboBox<String> dy = new JComboBox<String>(Dias);
-    String[] Comida = {"Desayuno", "1er colación", "Comida", "2da colación", "Cena"};
+    String[] Comida = {"Desayuno", "1er Colación", "Comida", "2da Colación", "Cena"};
     public JComboBox<String> mealtime = new JComboBox<String>(Comida);
 
     JLabel dish;
@@ -37,15 +50,6 @@ public class ManuallyGUI extends JPanel{
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        displayDiet = new JPanel();
-        displayDiet.setBackground(Color.BLUE);
-        displayDiet.setBorder(
-           BorderFactory.createCompoundBorder(
-         BorderFactory.createMatteBorder(10, 10, 10, 10, Color.BLACK),
-        BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        displayDiet.setVisible(true);
-
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
@@ -56,7 +60,7 @@ public class ManuallyGUI extends JPanel{
 
         gbc.gridy = 1;
         gbc.weighty = 1;
-        add(displayDiet, gbc);
+        add(displayDietCreator(), gbc);
 
         setVisible(true);
         
@@ -173,9 +177,9 @@ public class ManuallyGUI extends JPanel{
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
             
 
-        combos.setBackground(Color.GREEN);
-        dishPanel.setBackground(Color.GRAY);
-        dishButton.setBackground(Color.YELLOW);
+        combos.setBackground(new Color(170,204,203));
+        dishPanel.setBackground(new Color(230,230,230));
+        dishButton.setBackground(new Color(170,204,203));
 
     //----Acomodando la distribución de los paneles para agregarlos a Scanner-----------------------------
         sgbc.gridx = 0;
@@ -197,5 +201,67 @@ public class ManuallyGUI extends JPanel{
         scanner.add(dishButton, sgbc);
         scanner.setVisible(true);
         return scanner;
+    }
+
+    public JPanel displayDietCreator () {
+
+        displayDiet = new JPanel();
+        displayDiet.setLayout(new BorderLayout());
+        JTable tabla = new JTable(modelo);
+
+        //*************************Renderizador hecho con chatgpt*********************************************************************************************** */
+class MiRenderizador extends JTextArea
+                implements TableCellRenderer {
+
+            public MiRenderizador() {
+                setLineWrap(true);
+                setWrapStyleWord(true);
+                setOpaque(true);
+            }
+
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable tabla,
+                    Object valor,
+                    boolean seleccionado,
+                    boolean tieneFoco,
+                    int fila,
+                    int columna) {
+
+                setText(valor == null ? "" : valor.toString());
+
+                if (seleccionado) {
+                    setBackground(tabla.getSelectionBackground());
+                    setForeground(tabla.getSelectionForeground());
+                } else {
+                    setBackground(tabla.getBackground());
+                    setForeground(tabla.getForeground());
+                }
+
+                return this;
+            }
+        }
+
+        // 4. Asignamos el renderizador a la tabla
+        tabla.setDefaultRenderer(
+            Object.class,
+            new MiRenderizador()
+        );
+
+        // 5. Ajustamos manualmente la altura de las filas
+        tabla.setRowHeight(170
+
+        );
+
+
+        //***************************************************************************************************************** */
+
+
+
+
+        JScrollPane scrollPane = new JScrollPane(tabla);
+        displayDiet.add(scrollPane, BorderLayout.CENTER);
+
+        return displayDiet;
     }
 }

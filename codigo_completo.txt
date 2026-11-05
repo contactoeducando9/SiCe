@@ -137,6 +137,7 @@ package SiCe.GUI.dietScanner;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 import SiCe.Services.*;
 
@@ -147,11 +148,21 @@ public class ManuallyGUI extends JPanel{
     DietScannerActions actions = new DietScannerActions();    
 
     JPanel scanner; JPanel combos; JPanel dishPanel; JPanel dishButton;
+
+    String [] columnas = {"","Lunes", "Martes", "Mi茅rcoles", "Jueves", "Viernes", "S谩bado", "Domingo"};
+    String[][] datos = {
+            {"Desayuno", "", "", "", "", "", "", ""},
+            {"Colaci贸n", "", "", "", "", "", "", ""},
+            {"Comida", "", "", "", "", "", "", ""},
+            {"Colaci贸n", "", "", "", "", "", "", ""},
+            {"Cena", "", "", "", "", "", "", ""}
+        };
+    public DefaultTableModel modelo = new DefaultTableModel(datos, columnas);
     JPanel displayDiet;
 
     String[] Dias = {"Lunes", "Martes", "Mi茅rcoles", "Jueves", "Viernes", "S谩bado", "Domingo"};
     public JComboBox<String> dy = new JComboBox<String>(Dias);
-    String[] Comida = {"Desayuno", "1er colaci贸n", "Comida", "2da colaci贸n", "Cena"};
+    String[] Comida = {"Desayuno", "1er Colaci贸n", "Comida", "2da Colaci贸n", "Cena"};
     public JComboBox<String> mealtime = new JComboBox<String>(Comida);
 
     JLabel dish;
@@ -172,15 +183,6 @@ public class ManuallyGUI extends JPanel{
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        displayDiet = new JPanel();
-        displayDiet.setBackground(Color.BLUE);
-        displayDiet.setBorder(
-           BorderFactory.createCompoundBorder(
-         BorderFactory.createMatteBorder(10, 10, 10, 10, Color.BLACK),
-        BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        displayDiet.setVisible(true);
-
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
@@ -191,7 +193,7 @@ public class ManuallyGUI extends JPanel{
 
         gbc.gridy = 1;
         gbc.weighty = 1;
-        add(displayDiet, gbc);
+        add(displayDietCreator(), gbc);
 
         setVisible(true);
         
@@ -308,9 +310,9 @@ public class ManuallyGUI extends JPanel{
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
             
 
-        combos.setBackground(Color.GREEN);
-        dishPanel.setBackground(Color.GRAY);
-        dishButton.setBackground(Color.YELLOW);
+        combos.setBackground(new Color(170,204,203));
+        dishPanel.setBackground(new Color(230,230,230));
+        dishButton.setBackground(new Color(170,204,203));
 
     //----Acomodando la distribuci贸n de los paneles para agregarlos a Scanner-----------------------------
         sgbc.gridx = 0;
@@ -332,6 +334,17 @@ public class ManuallyGUI extends JPanel{
         scanner.add(dishButton, sgbc);
         scanner.setVisible(true);
         return scanner;
+    }
+
+    public JPanel displayDietCreator () {
+
+        displayDiet = new JPanel();
+        displayDiet.setLayout(new BorderLayout());
+        JTable tabla = new JTable(modelo);
+        JScrollPane scrollPane = new JScrollPane(tabla);
+        displayDiet.add(scrollPane, BorderLayout.CENTER);
+
+        return displayDiet;
     }
 }
 
@@ -485,16 +498,26 @@ package SiCe.Model;
 import java.util.ArrayList;
 
 public class DietDay {
-    ArrayList<Dish> comidasDelDia = new ArrayList<Dish>();
+    ArrayList<MealSlot> tiempos = new ArrayList<MealSlot>();
     String diaDeLaSemana;
 
     public DietDay (String n) {
         this.diaDeLaSemana = n;
     }
 
-    public void addDish (Dish n) {
-        this.comidasDelDia.add(n);
+    public void addMealSlot (MealSlot n) {
+        this.tiempos.add(n);
     }
+
+    public MealSlot searchMealSlot (String n) {
+        for (MealSlot m : tiempos){
+            if (m.nombre == n) {
+                return m;
+            }
+        }
+        return null;
+    }
+    
 }
 
 
@@ -502,19 +525,24 @@ public class DietDay {
 
 package SiCe.Model;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Dish {
     ArrayList<Ingredient> ingrs = new ArrayList<Ingredient>();
     public String nombreDelPlatillo;
-    public String tiempoDeComida;
+    String[] tiemposlot = {"Desayuno", "1er Colaci贸n", "Comida", "2da Colaci贸n", "Cena"};
+    ArrayList<String> tiempos = new ArrayList<>(Arrays.asList(tiemposlot));
+    String[] diasemana = {"Lunes", "Martes", "Mi茅rcoles", "Jueves", "Viernes", "S谩bado", "Domingo"};
+    ArrayList<String> diasSema = new ArrayList<>(Arrays.asList(diasemana));
 
     public Dish () {
     }
 
-    public Dish (String m, String n) {
+    public Dish (String m) {
         this.nombreDelPlatillo = m;
-        this.tiempoDeComida = n;
+        
     }
 
     public void dishIngrAdder (Ingredient n) {
@@ -523,6 +551,21 @@ public class Dish {
 
     public void dishReload () {
         this.ingrs.clear();
+    }
+
+    public String getLabel () {
+        String string = String.format("<html><b>%s</b></html>", nombreDelPlatillo);
+        return string;
+    }
+
+    public int getSlotMeal (String n) {
+        int tiempo = tiempos.indexOf(n);
+        return tiempo;
+    }
+
+    public int getDay (String n) {
+        int dia = diasSema.indexOf(n)+1;
+        return dia;
     }
 }
 
@@ -547,6 +590,28 @@ public class Ingredient {
 }
 
 
+========== C:\Users\W10\OneDrive\Documentos\V韈tor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\MealSlot.java ==========
+
+package SiCe.Model;
+
+public class MealSlot {
+
+    String nombre;
+    Dish dish;
+
+    public MealSlot (String n) {
+        this.nombre = n;
+    }
+
+    public void setDish (Dish n) {
+        this.dish = n;
+    }
+
+} 
+
+
+
+
 ========== C:\Users\W10\OneDrive\Documentos\V韈tor\Proyectos\VisualStudio\SiCe\src\SiCe\Model\WeeklyDiet.java ==========
 
 package SiCe.Model;
@@ -555,12 +620,19 @@ import java.util.ArrayList;
 
 public class WeeklyDiet {
     ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
-    String serial;
 
     public void dietDayAdder (DietDay n) {
         diasDeLaSemana.add(n);        
     }
-    
+
+    public DietDay searchDay (String n) {
+        for (DietDay m : diasDeLaSemana){
+            if (m.diaDeLaSemana == n) {
+                return m;
+            }
+        }
+        return null;
+    }
 }
 
 
@@ -571,51 +643,59 @@ package SiCe.Services;
 import SiCe.Model.*;
 import SiCe.GUI.dietScanner.*;
 
-import java.util.ArrayList;
+import javax.swing.*;
+
 
 
 public class DietScannerActions {
 
-    public ArrayList<WeeklyDiet> dietas = new ArrayList<WeeklyDiet>();
-    public ArrayList<DietDay> baseDays = new ArrayList<DietDay>();
-    public ArrayList<Dish> base = new ArrayList<Dish>(); 
+    WeeklyDiet dietaActual = new WeeklyDiet();
+    Dish borrador;
 
-    public void agregarIngrediente (ManuallyGUI n) {
-        
-        if (base.size() == 0) {
-            Dish platilloNuevo = new Dish(n.comboPlatillos.getSelectedItem().toString(), n.dy.getSelectedItem().toString());
-            platilloNuevo.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
-            base.add(platilloNuevo);  
-            n.ingrNtxt.setText(""); n.amounttxt.setText("");
-        } else {
-            for (Dish a : base) {
-                if (a.nombreDelPlatillo.equals(n.comboPlatillos.getSelectedItem().toString())) {
-                    a.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
-                } else {
-                    Dish platilloNuevo = new Dish(n.comboPlatillos.getSelectedItem().toString(), n.dy.getSelectedItem().toString() );
-                    platilloNuevo.dishIngrAdder(new Ingredient(n.ingrNtxt.getText(), Double.parseDouble(n.amounttxt.getText()), n.unit.getSelectedItem().toString()));
-                    base.add(platilloNuevo);  
-                    n.ingrNtxt.setText(""); n.amounttxt.setText("");
-                }
-            }
+    public void agregarIngrediente (ManuallyGUI gui) {
+
+        String nombre = gui.ingrNtxt.getText();
+        double cantidad = Double.parseDouble(gui.amounttxt.getText());
+        String unidad = gui.unit.getSelectedItem().toString();
+ 
+        Ingredient nuevo = new Ingredient(nombre, cantidad, unidad);
+
+        if (borrador == null) {
+        borrador = new Dish(gui.comboPlatillos.getSelectedItem().toString());
         }
+
+        borrador.dishIngrAdder(nuevo);
+
+        gui.ingrNtxt.setText("");
+        gui.amounttxt.setText("");
     }
+    
+    public void agregarPlatillo (ManuallyGUI gui) {
+        DietDay day;
+        MealSlot meal;
 
-    public void agregarPlatillo (ManuallyGUI n) {
-        DietDay nuevoDia;
-        WeeklyDiet nuevaDieta;
+        if (borrador != null) {
+            String dia = gui.dy.getSelectedItem().toString();
+            String tiempo = gui.mealtime.getSelectedItem().toString();
 
-        for (Dish a : base) {
-            if (a.nombreDelPlatillo.equals(n.comboPlatillos.getSelectedItem().toString())){
-                nuevoDia = new DietDay(n.dy.getSelectedItem().toString());
-                nuevaDieta = new WeeklyDiet();
-                nuevoDia.addDish(a);
-                baseDays.add(nuevoDia);
-                nuevaDieta.dietDayAdder(nuevoDia);
-                a.dishReload();
-                break;
+            day = dietaActual.searchDay(dia);
+            if (day == null) {
+                day = new DietDay(dia);
+                dietaActual.dietDayAdder(day);
             }
+            
+            meal = day.searchMealSlot(tiempo);
+            if (meal == null) {
+                meal = new MealSlot(tiempo);
+                day.addMealSlot(meal);
+            }
+
+            meal.setDish(borrador);
+
+            gui.modelo.setValueAt(borrador.getLabel(), borrador.getSlotMeal(tiempo), borrador.getDay(dia));
+
+            borrador = null;
+
         }
     }
 }
-

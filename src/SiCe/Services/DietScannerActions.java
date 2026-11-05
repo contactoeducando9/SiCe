@@ -3,12 +3,10 @@ package SiCe.Services;
 import SiCe.Model.*;
 import SiCe.GUI.dietScanner.*;
 
-
-
-
+//**********************estructura recomentada por chatGPT********************************************************* */
 public class DietScannerActions {
 
-    WeeklyDiet dietaActual = new WeeklyDiet();
+    public WeeklyDiet dietaActual = new WeeklyDiet();
     Dish borrador;
 
     public void agregarIngrediente (ManuallyGUI gui) {
@@ -50,6 +48,8 @@ public class DietScannerActions {
             }
 
             meal.setDish(borrador);
+
+            gui.modelo.setValueAt(borrador.getLabel(), borrador.getSlotMeal(tiempo), borrador.getDay(dia));
 
             borrador = null;
 

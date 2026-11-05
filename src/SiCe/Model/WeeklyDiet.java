@@ -11,7 +11,7 @@ public class WeeklyDiet {
 
     public DietDay searchDay (String n) {
         for (DietDay m : diasDeLaSemana){
-            if (m.diaDeLaSemana == n) {
+            if (m.diaDeLaSemana.equals(n)) {
                 return m;
             }
         }

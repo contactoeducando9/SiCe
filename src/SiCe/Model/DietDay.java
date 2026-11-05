@@ -16,7 +16,7 @@ public class DietDay {
 
     public MealSlot searchMealSlot (String n) {
         for (MealSlot m : tiempos){
-            if (m.nombre == n) {
+            if (m.nombre.equals(n)) {
                 return m;
             }
         }
