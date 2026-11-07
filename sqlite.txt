@@ -1,0 +1,379 @@
+PERSISTENCE DIRECTORY-----------------------------------
+
+package SiCe.Persistence;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+
+    private static final String URL = "jdbc:sqlite:sice.db";
+
+    public static Connection getConnection() throws SQLException {
+
+    Connection conexion = DriverManager.getConnection(URL);
+
+    try (var instruccion = conexion.createStatement()) {
+        instruccion.execute("PRAGMA foreign_keys = ON");
+    }
+
+    return conexion;
+    }
+
+}
+
+
+-------------------------------------------------------------------
+
+package SiCe.Persistence;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class DatabaseInitializer {
+
+    public static void initialize() throws SQLException {
+
+        String weeklyDiets = """
+            CREATE TABLE IF NOT EXISTS WeeklyDiets (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            """;
+
+        String dietDays = """
+            CREATE TABLE IF NOT EXISTS DietDays (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                weekly_diet_id TEXT NOT NULL,
+                day_name TEXT NOT NULL,
+
+                FOREIGN KEY (weekly_diet_id)
+                    REFERENCES WeeklyDiets(id)
+                    ON DELETE CASCADE,
+
+                UNIQUE (weekly_diet_id, day_name)
+            );
+            """;
+
+        String mealSlots = """
+            CREATE TABLE IF NOT EXISTS MealSlots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                diet_day_id INTEGER NOT NULL,
+                meal_name TEXT NOT NULL,
+
+                FOREIGN KEY (diet_day_id)
+                    REFERENCES DietDays(id)
+                    ON DELETE CASCADE,
+
+                UNIQUE (diet_day_id, meal_name)
+            );
+            """;
+
+        String dishes = """
+            CREATE TABLE IF NOT EXISTS Dishes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                meal_slot_id INTEGER NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+
+                FOREIGN KEY (meal_slot_id)
+                    REFERENCES MealSlots(id)
+                    ON DELETE CASCADE
+            );
+            """;
+
+        String ingredients = """
+            CREATE TABLE IF NOT EXISTS Ingredients (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                dish_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                amount REAL NOT NULL CHECK (amount > 0),
+                unit TEXT NOT NULL,
+
+                FOREIGN KEY (dish_id)
+                    REFERENCES Dishes(id)
+                    ON DELETE CASCADE
+            );
+            """;
+
+        try (Connection conexion = DatabaseConnection.getConnection();
+             Statement instruccion = conexion.createStatement()) {
+
+            instruccion.executeUpdate(weeklyDiets);
+            instruccion.executeUpdate(dietDays);
+            instruccion.executeUpdate(mealSlots);
+            instruccion.executeUpdate(dishes);
+            instruccion.executeUpdate(ingredients);
+        }
+    }
+}
+
+
+REPOSITORY DIRECTORY------------------------------------------------------------------------------
+
+package SiCe.Repository;
+
+import SiCe.Model.*;
+import SiCe.Persistence.DatabaseConnection;
+
+import java.sql.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class WeeklyDietRepository {
+
+    public void save(WeeklyDiet dieta) throws SQLException {
+
+        if (dieta == null || dieta.name == null || dieta.name.isBlank()) {
+            throw new IllegalArgumentException("La dieta necesita un nombre.");
+        }
+
+        if (dieta.id == null) {
+            dieta.id = java.util.UUID.randomUUID().toString();
+        }
+
+        try (Connection conexion = DatabaseConnection.getConnection()) {
+
+            conexion.setAutoCommit(false);
+
+            try {
+                // 1. Insertar dieta
+                String sqlDieta = """
+                    INSERT INTO WeeklyDiets (id, name)
+                    VALUES (?, ?)
+                    """;
+
+                try (PreparedStatement ps = conexion.prepareStatement(sqlDieta)) {
+                    ps.setString(1, dieta.id);
+                    ps.setString(2, dieta.name);
+                    ps.executeUpdate();
+                }
+
+                // 2. Recorrer días
+                for (DietDay dia : dieta.diasDeLaSemana) {
+
+                    long dayId = insertarDia(conexion, dia, dieta.id);
+
+                    // 3. Recorrer tiempos de comida
+                    for (MealSlot tiempo : dia.getTiempos()) {
+
+                        Dish platillo = tiempo.getDish();
+
+                        // No guardar tiempos sin platillo
+                        if (platillo == null) {
+                            continue;
+                        }
+
+                        long mealId = insertarTiempo(conexion, tiempo, dayId);
+
+                        // 4. Insertar platillo
+                        long dishId = insertarPlatillo(
+                            conexion, platillo, mealId
+                        );
+
+                        // 5. Recorrer ingredientes
+                        for (Ingredient ingrediente : platillo.getIngredientes()) {
+                            insertarIngrediente(
+                                conexion, ingrediente, dishId
+                            );
+                        }
+                    }
+                }
+
+                // Confirmar todos los cambios
+                conexion.commit();
+
+            } catch (SQLException | RuntimeException e) {
+
+                conexion.rollback();
+                throw e;
+            }
+        }
+    }
+
+
+    private long insertarDia(
+        Connection conexion, DietDay dia, String dietId
+    ) throws SQLException {
+
+        String sql = """
+            INSERT INTO DietDays (weekly_diet_id, day_name)
+            VALUES (?, ?)
+            """;
+
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, dietId);
+            ps.setString(2, dia.getNombre());
+            ps.executeUpdate();
+        }
+
+        return obtenerUltimoId(conexion);
+    }
+
+
+    private long insertarTiempo(
+        Connection conexion, MealSlot tiempo, long dayId
+    ) throws SQLException {
+
+        String sql = """
+            INSERT INTO MealSlots (diet_day_id, meal_name)
+            VALUES (?, ?)
+            """;
+
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setLong(1, dayId);
+            ps.setString(2, tiempo.getNombre());
+            ps.executeUpdate();
+        }
+
+        return obtenerUltimoId(conexion);
+    }
+
+
+    private long insertarPlatillo(
+        Connection conexion, Dish platillo, long mealId
+    ) throws SQLException {
+
+        String sql = """
+            INSERT INTO Dishes (meal_slot_id, name)
+            VALUES (?, ?)
+            """;
+
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setLong(1, mealId);
+            ps.setString(2, platillo.getNombre());
+            ps.executeUpdate();
+        }
+
+        return obtenerUltimoId(conexion);
+    }
+
+
+    private void insertarIngrediente(
+        Connection conexion, Ingredient ingrediente, long dishId
+    ) throws SQLException {
+
+        String sql = """
+            INSERT INTO Ingredients (dish_id, name, amount, unit)
+            VALUES (?, ?, ?, ?)
+            """;
+
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setLong(1, dishId);
+            ps.setString(2, ingrediente.getName());
+            ps.setDouble(3, ingrediente.getAmount());
+            ps.setString(4, ingrediente.getUnit());
+            ps.executeUpdate();
+        }
+    }
+
+
+    private long obtenerUltimoId(Connection conexion) throws SQLException {
+
+        String sql = "SELECT last_insert_rowid()";
+
+        try (Statement st = conexion.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+
+            throw new SQLException("No se pudo obtener el ID generado.");
+        }
+    }
+
+    public ArrayList<WeeklyDiet> findAll() throws SQLException {
+
+    ArrayList<WeeklyDiet> dietas = new ArrayList<>();
+
+    String sql = """
+        SELECT
+            WeeklyDiets.id AS diet_id,
+            WeeklyDiets.name AS diet_name,
+            DietDays.id AS day_id,
+            DietDays.day_name,
+            MealSlots.id AS meal_id,
+            MealSlots.meal_name,
+            Dishes.id AS dish_id,
+            Dishes.name AS dish_name,
+            Ingredients.id AS ingredient_id,
+            Ingredients.name AS ingredient_name,
+            Ingredients.amount,
+            Ingredients.unit
+
+        FROM WeeklyDiets
+
+        LEFT JOIN DietDays
+            ON WeeklyDiets.id = DietDays.weekly_diet_id
+
+        LEFT JOIN MealSlots
+            ON DietDays.id = MealSlots.diet_day_id
+
+        LEFT JOIN Dishes
+            ON MealSlots.id = Dishes.meal_slot_id
+
+        LEFT JOIN Ingredients
+            ON Dishes.id = Ingredients.dish_id
+
+        ORDER BY WeeklyDiets.id, DietDays.id,
+                 MealSlots.id, Dishes.id, Ingredients.id
+        """;
+
+    try (Connection conexion = DatabaseConnection.getConnection();
+         PreparedStatement ps = conexion.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        // Aquí reconstruiremos los objetos.
+
+    }
+
+    return dietas;
+}
+}
+
+pom.xml para el MAVEN-------------------------------------------------------
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>SiCe</groupId>
+    <artifactId>sice</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.1</version>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.54.1.0</version>
+        </dependency>
+    </dependencies>
+
+</project>
