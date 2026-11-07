@@ -138,6 +138,7 @@ package SiCe.GUI.dietScanner;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import SiCe.Services.*;
 
@@ -168,15 +169,14 @@ public class ManuallyGUI extends JPanel{
     JLabel dish;
     public DefaultComboBoxModel<String> platillos = new DefaultComboBoxModel<>();
     public JComboBox<String> comboPlatillos = new JComboBox<String>(platillos);
-    JButton agregarPlatillo = new JButton("Nuevo"); 
     JLabel ingrN; public JTextField ingrNtxt = new JTextField(15); 
     JLabel amount; public JTextField amounttxt = new JTextField(15);
     String[] units = {"kg","gr", "ltrs", "ml","pz"};
     public JComboBox<String> unit = new JComboBox<String>(units);
     
-    JButton ingr = new JButton("Agregar");
-
-    JButton dishB;
+    JButton ingr = new JButton("+ingrediente");
+    JButton saveB; JButton dishB; public JDialog saveDialog; public JButton saveAS; public JTextField nombreDietaTF;
+    java.awt.Window framePrincipal = SwingUtilities.getWindowAncestor(this); 
 
 //----------Constructor que llamaremos para dise√±ar el lector Manual---------------------------------------------------------------
     public ManuallyGUI () {
@@ -197,6 +197,25 @@ public class ManuallyGUI extends JPanel{
 
         setVisible(true);
         
+    }
+//-------Todos los metodos Creadores de alguna estructura visual-----------------------------------------------------------
+
+    public JDialog saveDialogCreator () {
+
+        saveDialog = new JDialog(framePrincipal, "Guardar dieta", Dialog.ModalityType.APPLICATION_MODAL);
+        saveDialog.setSize(200,160);
+        saveDialog.setLayout(new FlowLayout());
+
+        JLabel nombreDieta = new JLabel("Nombre");
+        nombreDietaTF = new JTextField (15);
+        saveAS = new JButton("Guardar dieta");
+
+        saveDialog.add(nombreDieta);
+        saveDialog.add(nombreDietaTF);
+        saveDialog.add(saveAS);
+
+        saveDialog.setVisible(true);
+        return saveDialog;
     }
 
     public JPanel scannerCreator () {
@@ -244,9 +263,9 @@ public class ManuallyGUI extends JPanel{
           actions.agregarIngrediente(this);
         });
 
-        agregarPlatillo.addActionListener(e -> {
-            platillos.addElement(comboPlatillos.getSelectedItem().toString());
-        });
+        //agregarPlatillo.addActionListener(e -> {
+          //  platillos.addElement(comboPlatillos.getSelectedItem().toString());
+        //});
 
         pgbc.gridx = 0;
         pgbc.gridy = 0;
@@ -260,10 +279,6 @@ public class ManuallyGUI extends JPanel{
         pgbc.gridx = 1;
         pgbc.weightx = 1;
         dishPanel.add(comboPlatillos, pgbc);
-
-        pgbc.gridx = 2;
-        pgbc.weightx = 0;
-        dishPanel.add(agregarPlatillo, pgbc);
 
         pgbc.gridx = 0;
         pgbc.gridy = 1;
@@ -300,13 +315,31 @@ public class ManuallyGUI extends JPanel{
 
 
         dishButton = new JPanel();
-        dishButton.setLayout(new BorderLayout());
-        dishB = new JButton("Agregar platillo");
+        dishButton.setLayout(new GridBagLayout());
+        GridBagConstraints bbva = new GridBagConstraints(); 
+        saveB = new JButton("Guardar");
+        dishB = new JButton("+platillo");
+        saveB.addActionListener(e -> {
+          saveDialogCreator();
+        });
 
         dishB.addActionListener(e -> {
           actions.agregarPlatillo(this);
         });
-        dishButton.add(dishB, BorderLayout.EAST);
+
+        bbva.fill = GridBagConstraints.NONE;
+        bbva.gridx = 1;
+        bbva.gridy = 0;
+        bbva.weightx = 1;
+        bbva.weighty = 0;
+        bbva.gridwidth = 1;
+        bbva.gridheight = 1;
+        bbva.anchor = GridBagConstraints.LINE_END;
+        dishButton.add(dishB, bbva);
+
+        bbva.gridx = 0;
+        bbva.anchor = GridBagConstraints.LINE_START;
+        dishButton.add(saveB, bbva);
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
             
 
@@ -341,11 +374,59 @@ public class ManuallyGUI extends JPanel{
         displayDiet = new JPanel();
         displayDiet.setLayout(new BorderLayout());
         JTable tabla = new JTable(modelo);
+
+        //*************************Renderizador hecho con chatgpt*********************************************************************************************** */
+class MiRenderizador extends JTextArea
+                implements TableCellRenderer {
+
+            public MiRenderizador() {
+                setLineWrap(true);
+                setWrapStyleWord(true);
+                setOpaque(true);
+            }
+
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable tabla,
+                    Object valor,
+                    boolean seleccionado,
+                    boolean tieneFoco,
+                    int fila,
+                    int columna) {
+
+                setText(valor == null ? "" : valor.toString());
+
+                if (seleccionado) {
+                    setBackground(tabla.getSelectionBackground());
+                    setForeground(tabla.getSelectionForeground());
+                } else {
+                    setBackground(tabla.getBackground());
+                    setForeground(tabla.getForeground());
+                }
+
+                return this;
+            }
+        }
+
+        // 4. Asignamos el renderizador a la tabla
+        tabla.setDefaultRenderer(
+            Object.class,
+            new MiRenderizador()
+        );
+
+        // 5. Ajustamos manualmente la altura de las filas
+        tabla.setRowHeight(170
+
+        );
+
+        //***************************************************************************************************************** */
         JScrollPane scrollPane = new JScrollPane(tabla);
         displayDiet.add(scrollPane, BorderLayout.CENTER);
 
         return displayDiet;
     }
+
+    
 }
 
 
@@ -511,7 +592,7 @@ public class DietDay {
 
     public MealSlot searchMealSlot (String n) {
         for (MealSlot m : tiempos){
-            if (m.nombre == n) {
+            if (m.nombre.equals(n)) {
                 return m;
             }
         }
@@ -525,7 +606,6 @@ public class DietDay {
 
 package SiCe.Model;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -554,8 +634,18 @@ public class Dish {
     }
 
     public String getLabel () {
-        String string = String.format("<html><b>%s</b></html>", nombreDelPlatillo);
-        return string;
+        StringBuilder texto = new StringBuilder();
+
+        texto.append(nombreDelPlatillo).append("\n\n");
+
+        for (Ingredient ingrediente : ingrs) {
+
+        texto.append("- ")
+             .append(ingrediente.name)
+             .append("\n");
+        }
+
+        return texto.toString();
     }
 
     public int getSlotMeal (String n) {
@@ -597,7 +687,7 @@ package SiCe.Model;
 public class MealSlot {
 
     String nombre;
-    Dish dish;
+    public Dish dish;
 
     public MealSlot (String n) {
         this.nombre = n;
@@ -619,7 +709,9 @@ package SiCe.Model;
 import java.util.ArrayList;
 
 public class WeeklyDiet {
-    ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
+    public String id;
+    public String name;
+    public ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
 
     public void dietDayAdder (DietDay n) {
         diasDeLaSemana.add(n);        
@@ -627,12 +719,57 @@ public class WeeklyDiet {
 
     public DietDay searchDay (String n) {
         for (DietDay m : diasDeLaSemana){
-            if (m.diaDeLaSemana == n) {
+            if (m.diaDeLaSemana.equals(n)) {
                 return m;
             }
         }
         return null;
     }
+
+    public int getDaysAmount() {
+        return diasDeLaSemana.size();
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Persistence\DatabaseConnection.java ==========
+
+package SiCe.Persistence;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+
+    private static final String URL = "jdbc:sqlite:sice.db";
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL);
+    }
+
+}
+
+
+
+
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Persistence\DatabaseInitializer.java ==========
+
+package SiCe.Persistence;
+
+public class DatabaseInitializer {
+    
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Repository\WeeklyDietRepository.java ==========
+
+package SiCe.Repository;
+
+public class WeeklyDietRepository {
+    
 }
 
 
@@ -643,13 +780,10 @@ package SiCe.Services;
 import SiCe.Model.*;
 import SiCe.GUI.dietScanner.*;
 
-import javax.swing.*;
-
-
-
+//**********************estructura recomendada por chatGPT********************************************************* */
 public class DietScannerActions {
 
-    WeeklyDiet dietaActual = new WeeklyDiet();
+    public WeeklyDiet dietaActual = new WeeklyDiet();
     Dish borrador;
 
     public void agregarIngrediente (ManuallyGUI gui) {
@@ -692,10 +826,44 @@ public class DietScannerActions {
 
             meal.setDish(borrador);
 
+            String nombre = borrador.nombreDelPlatillo;
+
+                if (gui.platillos.getIndexOf(nombre) == -1) {
+                    gui.platillos.addElement(nombre);
+                }
+
             gui.modelo.setValueAt(borrador.getLabel(), borrador.getSlotMeal(tiempo), borrador.getDay(dia));
 
             borrador = null;
 
         }
+    }
+}
+
+
+========== C:\Users\W10\OneDrive\Documentos\VÌctor\Proyectos\VisualStudio\SiCe\src\SiCe\Test\DatabaseConnectionTest.java ==========
+
+package SiCe.Test;
+
+import SiCe.Persistence.DatabaseConnection;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+
+public class DatabaseConnectionTest {
+
+    public static void main(String[] args) {
+
+        try (Connection conexion = DatabaseConnection.getConnection()) {
+
+            if (conexion != null) {
+                System.out.println("Conexi√≥n establecida correctamente.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error al conectar con SQLite.");
+            e.printStackTrace();
+        }
+
     }
 }

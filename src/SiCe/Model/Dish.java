@@ -1,6 +1,5 @@
 package SiCe.Model;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -22,6 +21,14 @@ public class Dish {
 
     public void dishIngrAdder (Ingredient n) {
         this.ingrs.add(n);
+    }
+
+    public String getNombre() {
+    return nombreDelPlatillo;
+    }
+
+    public ArrayList<Ingredient> getIngredientes() {
+    return ingrs;
     }
 
     public void dishReload () {

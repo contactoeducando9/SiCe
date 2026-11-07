@@ -3,7 +3,9 @@ package SiCe.Model;
 import java.util.ArrayList;
 
 public class WeeklyDiet {
-    ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
+    public String id;
+    public String name;
+    public ArrayList<DietDay> diasDeLaSemana = new ArrayList<DietDay>();
 
     public void dietDayAdder (DietDay n) {
         diasDeLaSemana.add(n);        
@@ -16,5 +18,9 @@ public class WeeklyDiet {
             }
         }
         return null;
+    }
+
+    public int getDaysAmount() {
+        return diasDeLaSemana.size();
     }
 }

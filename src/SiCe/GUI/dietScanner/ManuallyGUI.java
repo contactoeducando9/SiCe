@@ -2,7 +2,6 @@ package SiCe.GUI.dietScanner;
 
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
@@ -35,15 +34,14 @@ public class ManuallyGUI extends JPanel{
     JLabel dish;
     public DefaultComboBoxModel<String> platillos = new DefaultComboBoxModel<>();
     public JComboBox<String> comboPlatillos = new JComboBox<String>(platillos);
-    JButton agregarPlatillo = new JButton("Nuevo"); 
     JLabel ingrN; public JTextField ingrNtxt = new JTextField(15); 
     JLabel amount; public JTextField amounttxt = new JTextField(15);
     String[] units = {"kg","gr", "ltrs", "ml","pz"};
     public JComboBox<String> unit = new JComboBox<String>(units);
     
-    JButton ingr = new JButton("Agregar");
-
-    JButton dishB;
+    JButton ingr = new JButton("+ingrediente");
+    JButton saveB; JButton dishB; public JDialog saveDialog; public JButton saveAS; public JTextField nombreDietaTF;
+    java.awt.Window framePrincipal = SwingUtilities.getWindowAncestor(this); 
 
 //----------Constructor que llamaremos para diseñar el lector Manual---------------------------------------------------------------
     public ManuallyGUI () {
@@ -64,6 +62,25 @@ public class ManuallyGUI extends JPanel{
 
         setVisible(true);
         
+    }
+//-------Todos los metodos Creadores de alguna estructura visual-----------------------------------------------------------
+
+    public JDialog saveDialogCreator () {
+
+        saveDialog = new JDialog(framePrincipal, "Guardar dieta", Dialog.ModalityType.APPLICATION_MODAL);
+        saveDialog.setSize(200,160);
+        saveDialog.setLayout(new FlowLayout());
+
+        JLabel nombreDieta = new JLabel("Nombre");
+        nombreDietaTF = new JTextField (15);
+        saveAS = new JButton("Guardar dieta");
+
+        saveDialog.add(nombreDieta);
+        saveDialog.add(nombreDietaTF);
+        saveDialog.add(saveAS);
+
+        saveDialog.setVisible(true);
+        return saveDialog;
     }
 
     public JPanel scannerCreator () {
@@ -111,9 +128,9 @@ public class ManuallyGUI extends JPanel{
           actions.agregarIngrediente(this);
         });
 
-        agregarPlatillo.addActionListener(e -> {
-            platillos.addElement(comboPlatillos.getSelectedItem().toString());
-        });
+        //agregarPlatillo.addActionListener(e -> {
+          //  platillos.addElement(comboPlatillos.getSelectedItem().toString());
+        //});
 
         pgbc.gridx = 0;
         pgbc.gridy = 0;
@@ -127,10 +144,6 @@ public class ManuallyGUI extends JPanel{
         pgbc.gridx = 1;
         pgbc.weightx = 1;
         dishPanel.add(comboPlatillos, pgbc);
-
-        pgbc.gridx = 2;
-        pgbc.weightx = 0;
-        dishPanel.add(agregarPlatillo, pgbc);
 
         pgbc.gridx = 0;
         pgbc.gridy = 1;
@@ -167,13 +180,31 @@ public class ManuallyGUI extends JPanel{
 
 
         dishButton = new JPanel();
-        dishButton.setLayout(new BorderLayout());
-        dishB = new JButton("Agregar platillo");
+        dishButton.setLayout(new GridBagLayout());
+        GridBagConstraints bbva = new GridBagConstraints(); 
+        saveB = new JButton("Guardar");
+        dishB = new JButton("+platillo");
+        saveB.addActionListener(e -> {
+          saveDialogCreator();
+        });
 
         dishB.addActionListener(e -> {
           actions.agregarPlatillo(this);
         });
-        dishButton.add(dishB, BorderLayout.EAST);
+
+        bbva.fill = GridBagConstraints.NONE;
+        bbva.gridx = 1;
+        bbva.gridy = 0;
+        bbva.weightx = 1;
+        bbva.weighty = 0;
+        bbva.gridwidth = 1;
+        bbva.gridheight = 1;
+        bbva.anchor = GridBagConstraints.LINE_END;
+        dishButton.add(dishB, bbva);
+
+        bbva.gridx = 0;
+        bbva.anchor = GridBagConstraints.LINE_START;
+        dishButton.add(saveB, bbva);
         dishButton.setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
             
 
@@ -253,15 +284,12 @@ class MiRenderizador extends JTextArea
 
         );
 
-
         //***************************************************************************************************************** */
-
-
-
-
         JScrollPane scrollPane = new JScrollPane(tabla);
         displayDiet.add(scrollPane, BorderLayout.CENTER);
 
         return displayDiet;
     }
+
+    
 }

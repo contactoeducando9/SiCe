@@ -3,7 +3,7 @@ package SiCe.Services;
 import SiCe.Model.*;
 import SiCe.GUI.dietScanner.*;
 
-//**********************estructura recomentada por chatGPT********************************************************* */
+//**********************estructura recomendada por chatGPT********************************************************* */
 public class DietScannerActions {
 
     public WeeklyDiet dietaActual = new WeeklyDiet();
@@ -48,6 +48,12 @@ public class DietScannerActions {
             }
 
             meal.setDish(borrador);
+
+            String nombre = borrador.nombreDelPlatillo;
+
+                if (gui.platillos.getIndexOf(nombre) == -1) {
+                    gui.platillos.addElement(nombre);
+                }
 
             gui.modelo.setValueAt(borrador.getLabel(), borrador.getSlotMeal(tiempo), borrador.getDay(dia));
 

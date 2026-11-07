@@ -10,6 +10,14 @@ public class DietDay {
         this.diaDeLaSemana = n;
     }
 
+    public String getNombre() {
+    return diaDeLaSemana;
+    }
+
+    public ArrayList<MealSlot> getTiempos() {
+    return tiempos;
+    }
+
     public void addMealSlot (MealSlot n) {
         this.tiempos.add(n);
     }
@@ -22,5 +30,6 @@ public class DietDay {
         }
         return null;
     }
+    
     
 }

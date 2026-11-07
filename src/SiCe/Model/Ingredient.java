@@ -13,4 +13,16 @@ public class Ingredient {
         this.amount = a;
         this.unit = u;
     }
+
+    public String getName() {
+    return name;
+    }
+
+    public double getAmount() {
+    return amount;
+    }
+
+    public String getUnit() {
+    return unit;
+    }
 }
